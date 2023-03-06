@@ -1,6 +1,5 @@
 package com.jsogaard.minecplusplus
 
-import com.jsogaard.minecplusplus.PluginListener
 import org.bukkit.plugin.java.JavaPlugin
 
 class Plugin: JavaPlugin() {

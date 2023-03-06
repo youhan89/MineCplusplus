@@ -7,14 +7,14 @@ import org.bukkit.event.inventory.InventoryType
 import org.bukkit.inventory.ItemStack
 
 
-class PluginListener(val plugin: Plugin): Listener {
+class PluginListener(private val plugin: Plugin): Listener {
     @EventHandler
     fun onMoveInventoryEvent(event: InventoryMoveItemEvent) {
         if(event.initiator.type == InventoryType.HOPPER && event.destination.type == InventoryType.DROPPER) {
             val hopper = event.source
             val dropper = event.destination
             val itemType = event.item.type
-            val targetSlot = 5
+            val targetSlot = 4
 
             // When executing this code, the item is "up in the air" and can't be subtracted from the source...?
             // it appears to be overwritten with original stack after cancelling the event.

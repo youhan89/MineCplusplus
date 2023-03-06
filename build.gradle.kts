@@ -43,7 +43,7 @@ tasks.register<Copy>("deploy") {
         it.getProperty("deployTo", "./build")
     }
 
-    dependsOn(tasks.getByName("build"))
+    dependsOn(tasks.getByName("fatJar"))
     from(layout.buildDirectory.dir("libs/"))
     into(deployPath)
     include("*fat*.jar")

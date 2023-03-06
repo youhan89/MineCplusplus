@@ -1,6 +1,5 @@
 package com.jsogaard.minecplusplus
 
-import org.bukkit.Server
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.inventory.InventoryMoveItemEvent
@@ -13,23 +12,26 @@ class PluginListener(val plugin: Plugin): Listener {
     fun onMoveInventoryEvent(event: InventoryMoveItemEvent) {
         if(event.initiator.type == InventoryType.HOPPER && event.destination.type == InventoryType.DROPPER) {
             val hopper = event.source
-            //event.item = ItemStack(Material.DIAMOND, 1)
-            //event.isCancelled = true
-            val targetStack = event.destination.getItem(5)
+            val itemType = event.item.type
+            val targetSlot = 5
+
+            val targetStack = event.destination.getItem(targetSlot)
             val newStack = if(targetStack == null || targetStack.amount == 0) {
                 event.item
             } else {
-                targetStack.stackOrNull(event.item)
+                targetStack.combineOrNull(event.item)
             }
 
             if(newStack != null) {
-                event.destination.setItem(5, newStack)
+                event.destination.setItem(targetSlot, newStack)
 
                 //When executing this code, the item is "up in the air" and can't be subtracted
                 //from the source...? appears to be overwritten with original stack after cancelling the event.
+                //So we tell the server to queue this subtraction asap.
+                //TODO Do addition here as well!
 
                 plugin.scheduleRun {
-                    val slot = hopper.first(event.item.type)
+                    val slot = hopper.first(itemType)
                     val stack = hopper.getItem(slot)!!
                     hopper.clear(slot)
                     hopper.setItem(slot, stack - 1)
@@ -42,7 +44,7 @@ class PluginListener(val plugin: Plugin): Listener {
 }
 
 operator fun ItemStack.minus(other: Int): ItemStack {
-    return ItemStack(this.type, this.amount - 1)
+    return ItemStack(this.type, this.amount - other)
 }
 operator fun ItemStack.plus(other: ItemStack?): ItemStack {
     if(other == null)
@@ -59,7 +61,7 @@ private fun ItemStack.canStack(other: ItemStack): Boolean {
             && (this.amount + other.amount) <= this.type.maxStackSize
 }
 
-private fun ItemStack.stackOrNull(other: ItemStack): ItemStack? {
+private fun ItemStack.combineOrNull(other: ItemStack): ItemStack? {
     return if(this.canStack(other))
         this + other
     else

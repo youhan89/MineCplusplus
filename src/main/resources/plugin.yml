@@ -1,5 +1,5 @@
 name: Minecplusplus
 main: com.jsogaard.minecplusplus.Plugin
 version: 1.0
-api-version: 1.19.3
+api-version: 1.19
 commands:

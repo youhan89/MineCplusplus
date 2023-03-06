@@ -12,25 +12,24 @@ class PluginListener(val plugin: Plugin): Listener {
     fun onMoveInventoryEvent(event: InventoryMoveItemEvent) {
         if(event.initiator.type == InventoryType.HOPPER && event.destination.type == InventoryType.DROPPER) {
             val hopper = event.source
+            val dropper = event.destination
             val itemType = event.item.type
             val targetSlot = 5
 
-            val targetStack = event.destination.getItem(targetSlot)
-            val newStack = if(targetStack == null || targetStack.amount == 0) {
-                event.item
-            } else {
-                targetStack.combineOrNull(event.item)
-            }
+            // When executing this code, the item is "up in the air" and can't be subtracted from the source...?
+            // it appears to be overwritten with original stack after cancelling the event.
+            // So we tell the server to cancel event and queue our custom transaction asap instead.
+            plugin.scheduleRun {
+                val targetStack = dropper.getItem(targetSlot)
+                val newStack = if (targetStack == null || targetStack.amount == 0) {
+                    event.item
+                } else {
+                    targetStack.combineOrNull(event.item)
+                }
 
-            if(newStack != null) {
-                event.destination.setItem(targetSlot, newStack)
+                if (newStack != null) {
+                    dropper.setItem(targetSlot, newStack)
 
-                //When executing this code, the item is "up in the air" and can't be subtracted
-                //from the source...? appears to be overwritten with original stack after cancelling the event.
-                //So we tell the server to queue this subtraction asap.
-                //TODO Do addition here as well!
-
-                plugin.scheduleRun {
                     val slot = hopper.first(itemType)
                     val stack = hopper.getItem(slot)!!
                     hopper.clear(slot)

@@ -1,10 +1,14 @@
 package com.jsogaard.minecplusplus
 
+import org.bukkit.Material
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.inventory.InventoryMoveItemEvent
 import org.bukkit.event.inventory.InventoryType
 import org.bukkit.inventory.ItemStack
+import org.bukkit.metadata.FixedMetadataValue
+import org.bukkit.metadata.LazyMetadataValue
+import org.bukkit.metadata.MetadataValue
 
 
 class PluginListener(private val plugin: Plugin): Listener {
@@ -14,7 +18,26 @@ class PluginListener(private val plugin: Plugin): Listener {
             val hopper = event.source
             val dropper = event.destination
             val itemType = event.item.type
-            val targetSlot = 4
+
+            val dropperBlock = dropper.location?.block?.let {
+                if(it.type == Material.DROPPER) {
+                    it
+                } else null
+            }
+
+            val targetSlot = when(val metaData = dropperBlock?.getMetadata("nextSlot")) {
+                null -> 0
+                else -> {
+                    if(metaData.isEmpty()) {
+                        0
+                    } else {
+                        val last = (metaData[0]?.value() as? Int) ?: 0
+                        if(last + 1 <= 8) last + 1 else 0
+                    }
+                }
+            }
+
+            dropperBlock?.setMetadata("nextSlot", FixedMetadataValue(plugin, targetSlot))
 
             // When executing this code, the item is "up in the air" and can't be subtracted from the source...?
             // it appears to be overwritten with original stack after cancelling the event.

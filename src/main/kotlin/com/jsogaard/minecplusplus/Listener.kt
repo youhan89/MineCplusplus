@@ -23,7 +23,7 @@ class PluginListener(private val plugin: Plugin): Listener {
     @EventHandler
     fun onBlockPower(event: BlockRedstoneEvent) {
         if(event.newCurrent > 0 && event.oldCurrent <= 0) {
-            plugin.server.broadcastMessage("Foo: ${event.block.type.name}")
+            //plugin.server.broadcastMessage("Foo: ${event.block.type.name}")
         }
     }
 

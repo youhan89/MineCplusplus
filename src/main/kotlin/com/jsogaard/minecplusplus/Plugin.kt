@@ -7,6 +7,7 @@ class Plugin: JavaPlugin() {
         super.onEnable()
         server.pluginManager.registerEvents(PluginListener(this), this)
         server.pluginManager.registerEvents(DispenserPistonCraftAspect(this), this)
+        server.pluginManager.registerEvents(DispenseCraftingTableAspect(this), this)
     }
 
     fun scheduleRun(delayTicks: Long = 1L, block: () -> Unit) {

@@ -1,12 +1,9 @@
 package com.jsogaard.minecplusplus
 
 import org.bukkit.Material
-import org.bukkit.entity.Item
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.block.BlockDispenseEvent
-import org.bukkit.inventory.Inventory
-import org.bukkit.inventory.ItemStack
 
 val fillerItems = setOf(
     Material.BLUE_STAINED_GLASS,
@@ -38,16 +35,15 @@ class DispenseCraftingTableAspect(private val plugin: Plugin): Listener {
         val dispenser = event.block.toDispenser()
         val facingBlock = dispenser.facingBlock()
 
-        val inventory = when(facingBlock.type) {
-            Material.DROPPER -> facingBlock.toDropper().inventory
-            Material.DISPENSER -> facingBlock.toDispenser().inventory
-            else -> {
-                plugin.server.broadcastMessage("Not facing an dropper or dispenser.")
-                return
-            }
-        }
+        if(facingBlock.type != Material.DROPPER)
+            return
 
-        val pattern = inventory.contents.map { item ->
+        val dropper = facingBlock.toDropper()
+        val dropperInventory = dropper.inventory
+
+        event.isCancelled = true
+
+        val pattern = dropperInventory.contents.map { item ->
             when {
                 item == null -> null
                 fillerItems.contains(item.type)  -> null
@@ -61,7 +57,7 @@ class DispenseCraftingTableAspect(private val plugin: Plugin): Listener {
             return
         }
 
-        val removedRecipeInventoryMap = inventory.contents.map {
+        val removedRecipeInventoryMap = dropperInventory.contents.map {
             when {
                 it == null -> null
                 fillerItems.contains(it.type) -> it
@@ -73,24 +69,15 @@ class DispenseCraftingTableAspect(private val plugin: Plugin): Listener {
             }
         }
 
-        inventory.contents = removedRecipeInventoryMap.toTypedArray()
+        dropperInventory.contents = removedRecipeInventoryMap.toTypedArray()
 
-        when(facingBlock.type) {
-            Material.DROPPER -> {
-                facingBlock.toDropper().run {
-                    val temp = inventory.contents
-                    inventory.contents = arrayOfNulls(9)
-                    inventory.addItem(result)
-                    while(!inventory.isEmpty) {
-                        drop()
-                    }
-                    inventory.contents = temp
-                }
-            }
-            else -> return
+        val temp = dropperInventory.contents
+        dropperInventory.contents = arrayOfNulls(9)
+        dropperInventory.addItem(result)
+        while(!dropperInventory.isEmpty) {
+            dropper.drop()
         }
-
-        event.isCancelled = true
+        dropperInventory.contents = temp
     }
 }
 

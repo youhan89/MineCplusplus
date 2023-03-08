@@ -8,9 +8,10 @@ class Plugin: JavaPlugin() {
         server.pluginManager.registerEvents(PluginListener(this), this)
         server.pluginManager.registerEvents(DispenserPistonCraftAspect(this), this)
         server.pluginManager.registerEvents(DispenseCraftingTableAspect(this), this)
+        server.pluginManager.registerEvents(HopperToDropperAspect(this), this)
     }
 
-    fun scheduleRun(delayTicks: Long = 1L, block: () -> Unit) {
+    fun scheduleRun(delayTicks: Long = 0L, block: () -> Unit) {
         server.scheduler.runTaskLater(this, Runnable { block() }, delayTicks)
     }
 }

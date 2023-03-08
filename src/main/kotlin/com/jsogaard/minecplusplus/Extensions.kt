@@ -34,3 +34,31 @@ private fun Inventory.copyAndMerge(result: ItemStack): Array<ItemStack> {
         }
     }.toTypedArray()
 }
+
+operator fun ItemStack.minus(other: Int): ItemStack {
+    return ItemStack(this.type, this.amount - other)
+}
+operator fun ItemStack.plus(other: ItemStack?): ItemStack {
+    if(other == null)
+        return this
+
+    return ItemStack(
+        this.type,
+        (this.amount + other.amount).coerceAtMost(this.type.maxStackSize)
+    )
+}
+
+fun ItemStack?.canStack(other: ItemStack): Boolean {
+    if(this == null)
+        return true
+
+    return this.type == other.type
+            && (this.amount + other.amount) <= this.type.maxStackSize
+}
+
+fun ItemStack.combineOrNull(other: ItemStack): ItemStack? {
+    return if(this.canStack(other))
+        this + other
+    else
+        null
+}

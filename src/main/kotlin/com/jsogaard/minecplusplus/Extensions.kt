@@ -5,12 +5,10 @@ import org.bukkit.block.Dispenser
 import org.bukkit.block.Dropper
 import org.bukkit.block.data.Directional
 import org.bukkit.inventory.Inventory
-import org.bukkit.inventory.InventoryHolder
 import org.bukkit.inventory.ItemStack
 
 fun Block.toDispenser() = this.state as Dispenser
 fun Block.toDropper() = this.state as Dropper
-fun Block.asInventoryHolder() = this.state as? InventoryHolder
 
 fun Dispenser.facingBlock(): Block {
     val facing = (this.blockData as Directional).facing

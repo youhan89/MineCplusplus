@@ -43,6 +43,9 @@ class DispenseCraftingTableAspect(private val plugin: Plugin): Listener {
 
         event.isCancelled = true
 
+        //For now, set any dropper dispensed to with a crafting table as a Channeling Dropper
+        dropper.setCraftingDropper(true, plugin)
+
         val pattern = dropperInventory.contents.map { item ->
             when {
                 item == null -> null
@@ -80,4 +83,3 @@ class DispenseCraftingTableAspect(private val plugin: Plugin): Listener {
         dropperInventory.contents = temp
     }
 }
-

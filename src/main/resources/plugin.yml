@@ -3,3 +3,11 @@ main: com.jsogaard.minecplusplus.Plugin
 version: 1.0
 api-version: 1.19
 commands:
+  give-channeling-book:
+    description: Your description
+    usage: /give-channeling-book
+    permission: dispensercraft
+permissions:
+  dispensercraft:
+    description: All commands for plugin
+    default: op

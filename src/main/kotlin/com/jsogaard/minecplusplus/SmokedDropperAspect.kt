@@ -87,7 +87,10 @@ class SmokedDropperAspect(private val plugin: Plugin): Listener {
     }
 
     private fun isSmoked(dropper: Dropper): Boolean {
-        return dropper.block.getRelative(BlockFace.DOWN).type == Material.SOUL_CAMPFIRE
+        val below = dropper.block.getRelative(BlockFace.DOWN)
+        return below.type == Material.SOUL_CAMPFIRE
+                || below.type == Material.SOUL_TORCH
+                || below.type == Material.SOUL_WALL_TORCH
     }
 
 }

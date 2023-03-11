@@ -12,11 +12,12 @@ class Plugin: JavaPlugin() {
         super.onEnable()
         server.pluginManager.registerEvents(PluginListener(this), this)
         server.pluginManager.registerEvents(DispenserPistonCraftAspect(this), this)
-        server.pluginManager.registerEvents(DispenseCraftingTableAspect(this), this)
+        //server.pluginManager.registerEvents(DispenseCraftingTableAspect(this), this)
         server.pluginManager.registerEvents(ChannelingDropperAspect(this), this)
         server.pluginManager.registerEvents(CheatAspect(this), this)
         server.pluginManager.registerEvents(ChannelingDropperCraftingRecipeAspect(this), this)
         server.pluginManager.registerEvents(SmokedDropperAspect(this), this)
+        server.pluginManager.registerEvents(ItemMoldingAspect(this), this)
     }
 
     fun scheduleRun(delayTicks: Long = 0L, block: () -> Unit) {

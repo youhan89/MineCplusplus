@@ -1,6 +1,5 @@
 package com.jsogaard.minecplusplus
 
-import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.block.BlockFace
 import org.bukkit.block.Dropper
@@ -10,14 +9,10 @@ import org.bukkit.event.Listener
 import org.bukkit.event.block.BlockDispenseEvent
 import org.bukkit.event.block.BlockDropItemEvent
 import org.bukkit.event.block.BlockRedstoneEvent
-import org.bukkit.event.inventory.InventoryMoveItemEvent
-import org.bukkit.event.inventory.InventoryType
 import org.bukkit.event.weather.WeatherChangeEvent
-import org.bukkit.inventory.ItemStack
-import org.bukkit.metadata.FixedMetadataValue
 
 
-class PluginListener(private val plugin: Plugin): Listener {
+class FirstTestAspect(private val plugin: Plugin): Listener {
     private var stopTheDrop = false
 
     @EventHandler

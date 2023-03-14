@@ -27,7 +27,7 @@ val fillerItems = setOf(
 class DispenseCraftingTableAspect(private val plugin: Plugin): Listener {
     @EventHandler
     fun onEvent(event: BlockDispenseEvent) {
-        plugin.server.broadcastMessage("Dispense a ${event.item.type}")
+        //plugin.server.broadcastMessage("Dispense a ${event.item.type}")
 
         if(event.item.type != Material.CRAFTING_TABLE)
             return

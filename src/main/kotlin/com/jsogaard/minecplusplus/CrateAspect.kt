@@ -4,8 +4,12 @@ import org.bukkit.Material
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.block.BlockDispenseEvent
+import org.bukkit.inventory.ItemStack
 
-class DispenseCraftingTableAspect(private val plugin: Plugin): Listener {
+/**
+ * unfinished
+ */
+class CreateAspect(private val plugin: Plugin): Listener {
     @EventHandler
     fun onEvent(event: BlockDispenseEvent) {
         //plugin.server.broadcastMessage("Dispense a ${event.item.type}")
@@ -57,10 +61,23 @@ class DispenseCraftingTableAspect(private val plugin: Plugin): Listener {
 
         val temp = dropperInventory.contents
         dropperInventory.contents = arrayOfNulls(9)
-        dropperInventory.addItem(result)
+        dropperInventory.addItem(createOf(result))
         while(!dropperInventory.isEmpty) {
             dropper.drop()
         }
         dropperInventory.contents = temp
+    }
+
+    private fun createOf(result: ItemStack): ItemStack {
+        return ItemStack(Material.STRIPPED_OAK_WOOD, 1).also {
+            it.itemMeta = it.itemMeta.also { meta ->
+                meta!!
+                meta.setDisplayName("Crate")
+                meta.lore = listOf(
+                    result.type.key.toString(),
+                    result.amount.toString()
+                )
+            }
+        }
     }
 }

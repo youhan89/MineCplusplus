@@ -38,7 +38,7 @@ class ChannelingDropperAspect(private val plugin: Plugin): Listener {
             var canStack = false
             while(triesLeft > 0) {
                 val slot = dropperInventory.contents[targetSlot]
-                if (slot.canStack(event.item)) {
+                if (slot.canStackWith(event.item)) {
                     canStack = true
                     break
                 } else {
@@ -62,7 +62,7 @@ class ChannelingDropperAspect(private val plugin: Plugin): Listener {
                 val newStack = if (targetStack == null || targetStack.amount == 0) {
                     event.item
                 } else {
-                    targetStack.combineOrNull(event.item)
+                    targetStack.stackWithOrNull(event.item)
                 }
 
                 if (newStack != null) {

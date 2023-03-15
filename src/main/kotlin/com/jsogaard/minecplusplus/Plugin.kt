@@ -10,14 +10,16 @@ class Plugin: JavaPlugin() {
     )
     override fun onEnable() {
         super.onEnable()
+        server.pluginManager.registerEvents(DispenseCraftingTableAspect(this), this)
+        server.pluginManager.registerEvents(SmokedDropperAspect(this), this)
+
         //server.pluginManager.registerEvents(FirstTestAspect(this), this)
         //server.pluginManager.registerEvents(DispenserPistonCraftAspect(this), this)
-        server.pluginManager.registerEvents(DispenseCraftingTableAspect(this), this)
         //server.pluginManager.registerEvents(ChannelingDropperAspect(this), this)
         //server.pluginManager.registerEvents(CheatAspect(this), this)
         //server.pluginManager.registerEvents(ChannelingDropperCraftingRecipeAspect(this), this)
-        server.pluginManager.registerEvents(SmokedDropperAspect(this), this)
         //server.pluginManager.registerEvents(ItemMoldingAspect(this), this)
+        //server.pluginManager.registerEvents(CreateAspect(this), this)
     }
 
     fun scheduleRun(delayTicks: Long = 0L, block: () -> Unit) {

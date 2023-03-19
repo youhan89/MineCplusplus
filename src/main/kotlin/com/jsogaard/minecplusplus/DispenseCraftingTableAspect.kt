@@ -1,31 +1,35 @@
 package com.jsogaard.minecplusplus
 
-import org.bukkit.Material
+import org.bukkit.*
+import org.bukkit.block.Block
+import org.bukkit.block.Container
+import org.bukkit.block.Dropper
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.block.BlockDispenseEvent
+import org.bukkit.inventory.Inventory
+import org.bukkit.inventory.ItemStack
 
 class DispenseCraftingTableAspect(private val plugin: Plugin): Listener {
     @EventHandler
     fun onEvent(event: BlockDispenseEvent) {
-        //plugin.server.broadcastMessage("Dispense a ${event.item.type}")
-
         if(event.item.type != Material.CRAFTING_TABLE)
             return
 
         val dispenser = event.block.toDispenser()
-        val facingBlock = dispenser.facingBlock()
+        val dropperBlock = dispenser.facingBlock()
 
-        if(facingBlock.type != Material.DROPPER)
+        if(dropperBlock.type != Material.DROPPER)
             return
 
-        val dropper = facingBlock.toDropper()
+        val dropper = dropperBlock.toDropper()
         val dropperInventory = dropper.inventory
 
         event.isCancelled = true
 
+        //(the following is an experiment related to ChannelingDropperAspect)
         //For now, set any dropper dispensed to with a crafting table as a Channeling Dropper
-        dropper.setCraftingDropper(true, plugin)
+        //dropper.setCraftingDropper(true, plugin)
 
         val pattern = dropperInventory.contents.map { item ->
             when {
@@ -37,11 +41,23 @@ class DispenseCraftingTableAspect(private val plugin: Plugin): Listener {
 
         val recipe = plugin.server.getCraftingRecipe(pattern.toTypedArray(), event.block.world)
         val result = recipe?.result ?: run {
-            plugin.server.broadcastMessage("No recipe found for crafting matrix...")
+            //plugin.server.broadcastMessage("No recipe found for crafting matrix...")
+            //Play fizzle effect
+            val location = dropper.block.location
+            dropper.world.playEffect(location, Effect.SMOKE, 1);
             return
         }
 
-        val removedRecipeInventoryMap = dropperInventory.contents.map {
+        //The dropper is either facing another container, or something else. Make sure we can actually put the items there.
+        //If it's not an inventory, it'll just drop into the world, which is always safe
+        val dropTargetBlock = dropperBlock.facingBlock()!!
+        val chainedInventory = dropTargetBlock.inventory()
+        if(chainedInventory?.canReceive(result) == false) {
+            return
+        }
+
+        //This next part removes a set of ingredients from the inventory
+        val contentsAfterCrafting = dropperInventory.contents.map {
             when {
                 it == null -> null
                 fillerItems.contains(it.type) -> it
@@ -51,16 +67,62 @@ class DispenseCraftingTableAspect(private val plugin: Plugin): Listener {
                 }
                 else -> null
             }
-        }
+        }.toTypedArray()
 
-        dropperInventory.contents = removedRecipeInventoryMap.toTypedArray()
-
-        val temp = dropperInventory.contents
         dropperInventory.contents = arrayOfNulls(9)
         dropperInventory.addItem(result)
+        var previousAmount = result.amount
         while(!dropperInventory.isEmpty) {
             dropper.drop()
+
+            //As an additional safeguard, make sure we actually dropped an item
+            val newAmount = dropperInventory.storageContents.sumOf { it?.amount ?: 0 }
+            if(previousAmount == newAmount) {
+                //If this happens, we must fix our logic earlier in this method that checks if we can drop all items.
+                plugin.server.broadcastMessage("Error! Safeguard triggered, aborting drop! Output has been lost!")
+
+                //Revert dropper contents to the state it would have as if we would have succeeded dropping everything
+                //This is important, so we don't create a dupe bug if one or more items have already been dropped.
+                dropperInventory.contents = contentsAfterCrafting
+                return
+            }
+
+            previousAmount = newAmount
         }
-        dropperInventory.contents = temp
+        dropperInventory.contents = contentsAfterCrafting
+
+        playCraftEffect(dropper, dropTargetBlock)
     }
+
+    private fun playCraftEffect(dropper: Dropper, dropTargetBlock: Block) {
+        val x = dropper.x + 0.5
+        val y = dropper.y + 0.5
+        val z = dropper.z + 0.5
+        val ox = dropTargetBlock.location.x + 0.5
+        val oy = dropTargetBlock.location.y + 0.5
+        val oz = dropTargetBlock.location.z + 0.5
+
+        val newLocation = Location(
+            dropper.world,
+            x + (ox - x) / 2,
+            y + (oy - y) / 2,
+            z + (oz - z) / 2
+        )
+
+        dropper.world.spawnParticle(Particle.SMALL_FLAME, newLocation, 16, 0.1, 0.1, 0.1, 0.01)
+    }
+}
+
+private fun Inventory.canReceive(item: ItemStack): Boolean {
+    val single = item.clone().also { it.amount = 1 }
+
+    val canStackAmount = this.storageContents.sumOf {
+        if(it.canStackWith(single)) 1 as Int else 0
+    }
+
+    return canStackAmount >= item.amount
+}
+
+private fun Block.inventory(): Inventory? {
+    return (this.state as? Container)?.inventory
 }

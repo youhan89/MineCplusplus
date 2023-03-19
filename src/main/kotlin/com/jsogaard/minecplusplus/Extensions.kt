@@ -15,6 +15,12 @@ fun Dispenser.facingBlock(): Block {
     return this.block.getRelative(facing)
 }
 
+fun Block.facingBlock(): Block? {
+    val facing = (this.blockData as? Directional)?.facing
+        ?: return null
+    return this.getRelative(facing)
+}
+
 private fun Inventory.copyAndMerge(result: ItemStack): Array<ItemStack> {
     return this.contents.map { currentItem ->
         when {

@@ -6,7 +6,7 @@ import org.bukkit.inventory.ItemStack
 import kotlin.math.ceil
 
 object BlockBreaking {
-    fun getBreakTimeSeconds(tool: ItemStack, block: Block): Float {
+    fun getBreakTimeTicks(tool: ItemStack, block: Block): Int {
         val canHarvest = !block.blockData.requiresCorrectToolForDrops() || block.blockData.isPreferredTool(tool)
 
         val efficiencyLevel = tool.itemMeta.enchants.firstNotNullOfOrNull {
@@ -15,7 +15,7 @@ object BlockBreaking {
             else null
         } ?: 0
 
-        return getBreakTimeSeconds(
+        return getBreakTimeTicks(
             toolMultiplier = block.getDestroySpeed(tool),
             canHarvest = canHarvest,
             efficiencyLevel = efficiencyLevel,
@@ -31,7 +31,12 @@ object BlockBreaking {
      *
      * As specified here, minus some player buffs/debuffs: https://minecraft.fandom.com/wiki/Breaking
      */
-    fun getBreakTimeSeconds(toolMultiplier: Float, canHarvest: Boolean, efficiencyLevel: Int, blockHardness: Float): Float {
+    fun getBreakTimeTicks(
+        toolMultiplier: Float,
+        canHarvest: Boolean,
+        efficiencyLevel: Int,
+        blockHardness: Float
+    ): Int {
         val speed = when {
             toolMultiplier > 1f && efficiencyLevel >= 1
                 -> toolMultiplier + (efficiencyLevel * efficiencyLevel) + 1f
@@ -48,12 +53,10 @@ object BlockBreaking {
 
         if (damage > 1f) {
             // Instant breaking
-            return 0f
+            return 0
         }
 
-        val ticks = ceil(1 / damage)
-
-        //Seconds:
-        return ticks / 20
+        // In ticks:
+        return ceil(1 / damage).toInt()
     }
 }

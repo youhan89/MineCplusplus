@@ -5,17 +5,23 @@ import com.jsogaard.minecplusplus.effects.Effects
 import com.jsogaard.minecplusplus.facingBlock
 import com.jsogaard.minecplusplus.rules.BlockBreaking
 import com.jsogaard.minecplusplus.rules.Rules
+import com.jsogaard.minecplusplus.toDispenserOrNull
 import org.bukkit.Material
 import org.bukkit.block.BlockFace
 import org.bukkit.enchantments.Enchantment
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
+import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.block.BlockDispenseEvent
+import org.bukkit.event.block.BlockRedstoneEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.inventory.ItemStack
+import kotlin.math.abs
 
 class BreakingAspect(private val plugin: Plugin): Listener {
-    private val debug = false
+    private val debug = true
+    private val transactions = mutableMapOf<Long, BreakTransaction>()
+    private var counter = 0L
 
     @EventHandler
     fun onEvent(event: BlockDispenseEvent) {
@@ -30,18 +36,57 @@ class BreakingAspect(private val plugin: Plugin): Listener {
             }
 
             if (targetBlock.type !in Rules.CANT_BE_BROKEN_BY_PLAYERS) {
-                targetBlock.breakNaturally(event.item)
+                val transaction = BreakTransaction(
+                    id = nextTxId(),
+                    durationTicks = BlockBreaking.getBreakTimeTicks(event.item, targetBlock),
+                    breaker = event.block.location,
+                    breakee = targetBlock.location,
+                    breakeeType = targetBlock.type,
+                    tool = event.item,
+                )
+
+                transactions[transaction.id] = transaction
+
+                //targetBlock.breakNaturally(event.item)
+
                 event.isCancelled = true
+                plugin.scheduleRun(transaction.durationTicks.toLong()) {
+                    onTransactionExecute(transaction)
+                }
 
-                //TODO -> SFX
+                //TODO -> SFX/VFX
                 //TODO -> Consume durability
-
-                //TODO -> IDEA: Require multiple activations - or long activation?
-                //TODO -> Consider block break time. Look up item.type.hardness
-
             } else {
                 Effects.fizzle(event.block.location, event.block.getRelative(BlockFace.UP).location)
             }
+        }
+    }
+
+    @EventHandler
+    fun onEvent(event: BlockRedstoneEvent) {
+        //plugin.server.broadcastMessage("${event.block.location.toString()} ${event.newCurrent}")
+
+        if(event.newCurrent != 0)
+            return
+
+        val subject = event.block
+        val loc = subject.location
+
+        transactions.forEach {
+            val bloc = it.value.breaker
+            if(abs(bloc.x - loc.x) <= 1 && abs(bloc.y - loc.y) <= 1 && abs(bloc.z - loc.z) <= 1) {
+                plugin.scheduleRun {
+                    validateTransactionPower(it.value)
+                }
+            }
+        }
+    }
+
+    @EventHandler
+    fun onEvent(event: BlockBreakEvent) {
+        transactions.forEach {
+            if(it.value.breakee == event.block.location)
+                failTransaction(it.value, "Block was broken")
         }
     }
 
@@ -61,7 +106,7 @@ class BreakingAspect(private val plugin: Plugin): Listener {
             val block = event.clickedBlock!!
             val tool = event.item!!
 
-            val breakTime = BlockBreaking.getBreakTimeSeconds(event.item!!, event.clickedBlock!!)
+            val breakTime = BlockBreaking.getBreakTimeTicks(event.item!!, event.clickedBlock!!) / 20 //to seconds
             val requireSpecial = event.clickedBlock?.blockData?.requiresCorrectToolForDrops()
             val isPreferred = event.clickedBlock!!.isPreferredTool(event.item!!)
 
@@ -75,6 +120,49 @@ class BreakingAspect(private val plugin: Plugin): Listener {
             val blockHardness = block.type.hardness
 
             plugin.server.broadcastMessage("Breaktime: $breakTime. requireSpecial: $requireSpecial, isPreferred: $isPreferred, canHarvest: $canHarvest, hardness: $blockHardness, toolMultiplier: $toolMultiplier, efficiency: $efficiencyLevel")
+        }
+    }
+
+    private fun nextTxId() = counter++
+
+    private fun onTransactionExecute(tx: BreakTransaction) {
+        if(!transactions.contains(tx.id))
+            return
+
+        val dispenserBlock = tx.breaker.block
+        val targetBlock = tx.breakee.block
+
+        val dispenser = dispenserBlock.toDispenserOrNull()
+            ?: run {
+                failTransaction(tx, "The breaker was not a dispenser")
+                return
+            }
+
+        if(!dispenser.inventory.filterNotNull().any { it.isSimilar(tx.tool) }) {
+            failTransaction(tx, "The tool wasn't found")
+            return
+        }
+
+        if(targetBlock.type != tx.breakeeType) {
+            failTransaction(tx, "The target material doesnt match")
+            return
+        }
+
+        transactions.remove(tx.id)
+        targetBlock.breakNaturally(tx.tool)
+    }
+
+    private fun failTransaction(tx: BreakTransaction, msg: String) {
+        transactions.remove(tx.id)
+
+        if(!debug) return
+
+        plugin.server.broadcastMessage("Breaker Tx failed: $msg")
+    }
+
+    private fun validateTransactionPower(tx: BreakTransaction) {
+        if(tx.breaker.block.blockPower == 0) {
+            failTransaction(tx, "Redstone power went away")
         }
     }
 }

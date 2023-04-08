@@ -8,6 +8,7 @@ import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
 
 fun Block.toDispenser() = this.state as Dispenser
+fun Block.toDispenserOrNull() = this.state as? Dispenser
 fun Block.toDropper() = this.state as Dropper
 
 fun Dispenser.facingBlock(): Block {

@@ -20,7 +20,7 @@ object Rules {
         //TODO -> There are probably a lot more of these
     )
 
-    val BLOCK_BREAK_ENABLERS = listOf(
+    val PICKAXES = listOf(
         Material.WOODEN_PICKAXE,
         Material.STONE_PICKAXE,
         Material.IRON_PICKAXE,
@@ -28,4 +28,35 @@ object Rules {
         Material.DIAMOND_PICKAXE,
         Material.NETHERITE_PICKAXE,
     )
+
+    val AXES = listOf(
+        Material.WOODEN_AXE,
+        Material.STONE_AXE,
+        Material.IRON_AXE,
+        Material.GOLDEN_AXE,
+        Material.DIAMOND_AXE,
+        Material.NETHERITE_AXE,
+    )
+
+    val SHOVELS = listOf(
+        Material.WOODEN_SHOVEL,
+        Material.STONE_SHOVEL,
+        Material.IRON_SHOVEL,
+        Material.GOLDEN_SHOVEL,
+        Material.DIAMOND_SHOVEL,
+        Material.NETHERITE_SHOVEL,
+    )
+
+    val HOES = listOf(
+        Material.WOODEN_HOE,
+        Material.STONE_HOE,
+        Material.IRON_HOE,
+        Material.GOLDEN_HOE,
+        Material.DIAMOND_HOE,
+        Material.NETHERITE_HOE,
+    )
+
+    val ALL_TOOLS = PICKAXES + HOES + AXES + SHOVELS
+
+    val BLOCK_BREAK_ENABLERS = ALL_TOOLS
 }

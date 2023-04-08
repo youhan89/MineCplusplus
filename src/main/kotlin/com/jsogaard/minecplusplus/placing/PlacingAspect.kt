@@ -18,6 +18,12 @@ class PlacingAspect(private val plugin: Plugin) : Listener {
     fun onEvent(event: BlockDispenseEvent) {
         val item = event.item
 
+        if(item.type == Material.SHULKER_BOX) {
+            // Never place the shulker box, as it's one of the few blocks that can actually
+            // be natively placed by a dispenser, and doing it with our method would ruin the contents
+            return
+        }
+
         if (item.type.isBlock) {
             val dispenser = event.block.toDispenser()
 

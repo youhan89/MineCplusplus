@@ -57,7 +57,7 @@ class ItemMoldingAspect(private val plugin: Plugin): Listener {
             }
         }
 
-        val recipe = plugin.server.getCraftingRecipe(pattern.toTypedArray(), event.block.world)
+        val recipe = plugin.server.getCraftingRecipe(pattern.toTypedArray() as Array<out ItemStack>, event.block.world)
         val result = recipe?.result ?: run {
             plugin.server.broadcastMessage("No recipe found for crafting matrix...")
             return
@@ -102,6 +102,7 @@ class ItemMoldingAspect(private val plugin: Plugin): Listener {
             val bsm = event.source.itemMeta as BlockStateMeta
             val box = bsm.blockState as ShulkerBox
             val itemInside = box.inventory.contents.first()
+                ?: return
             event.result = itemInside
         }
     }

@@ -7,6 +7,7 @@ import org.bukkit.block.data.Directional
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.block.BlockPistonRetractEvent
+import org.bukkit.inventory.ItemStack
 
 /**
  * Crafts an item from a dispenser when a piston holding a crafting table is pulled from it
@@ -45,7 +46,7 @@ class DispenserPistonCraftAspect(val plugin: Plugin): Listener {
             }
 
             val dispenser = dispenserBlock.state as Dispenser
-            val recipe = plugin.server.getCraftingRecipe(dispenser.inventory.contents, event.block.world)
+            val recipe = plugin.server.getCraftingRecipe(dispenser.inventory.contents as Array<out ItemStack>, event.block.world)
             val result = recipe?.result ?: run {
                 plugin.server.broadcastMessage("No recipe found for crafting matrix...")
                 return

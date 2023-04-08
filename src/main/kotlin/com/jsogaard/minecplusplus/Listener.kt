@@ -10,6 +10,7 @@ import org.bukkit.event.block.BlockDispenseEvent
 import org.bukkit.event.block.BlockDropItemEvent
 import org.bukkit.event.block.BlockRedstoneEvent
 import org.bukkit.event.weather.WeatherChangeEvent
+import org.bukkit.inventory.ItemStack
 
 
 class FirstTestAspect(private val plugin: Plugin): Listener {
@@ -45,7 +46,7 @@ class FirstTestAspect(private val plugin: Plugin): Listener {
                 }
                 val outputBlock = dropper.block.getRelative(facing)
 
-                val recipe = plugin.server.getCraftingRecipe(dropper.inventory.contents, event.block.world)
+                val recipe = plugin.server.getCraftingRecipe(dropper.inventory.contents as Array<out ItemStack>, event.block.world)
                 val result = recipe?.result ?: run {
                     plugin.server.broadcastMessage("Nothing matches the recipe...")
                     return@scheduleRun

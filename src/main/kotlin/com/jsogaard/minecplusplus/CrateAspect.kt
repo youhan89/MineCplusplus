@@ -39,7 +39,7 @@ class CreateAspect(private val plugin: Plugin): Listener {
             }
         }
 
-        val recipe = plugin.server.getCraftingRecipe(pattern.toTypedArray(), event.block.world)
+        val recipe = plugin.server.getCraftingRecipe(pattern.toTypedArray() as Array<out ItemStack>?, event.block.world)
         val result = recipe?.result ?: run {
             plugin.server.broadcastMessage("No recipe found for crafting matrix...")
             return

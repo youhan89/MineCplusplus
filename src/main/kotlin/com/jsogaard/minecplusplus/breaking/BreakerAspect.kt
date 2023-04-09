@@ -2,7 +2,7 @@ package com.jsogaard.minecplusplus.breaking
 
 import com.jsogaard.minecplusplus.Plugin
 import com.jsogaard.minecplusplus.deleteOne
-import com.jsogaard.minecplusplus.effects.Effects
+import com.jsogaard.minecplusplus.effects.ParticleFX
 import com.jsogaard.minecplusplus.effects.Sfx
 import com.jsogaard.minecplusplus.facingBlock
 import com.jsogaard.minecplusplus.rules.BlockBreaking
@@ -24,7 +24,7 @@ import java.lang.IllegalArgumentException
 import kotlin.math.abs
 import kotlin.random.Random
 
-class BreakingAspect(private val plugin: Plugin): Listener {
+class BreakerAspect(private val plugin: Plugin): Listener {
     private val debug = false
     private val transactions = mutableMapOf<Long, BreakTransaction>()
     private var counter = 0L
@@ -37,7 +37,7 @@ class BreakingAspect(private val plugin: Plugin): Listener {
 
             if(targetBlock.isEmpty || targetBlock.isLiquid) {
                 event.isCancelled = true
-                Effects.fizzle(event.block.location, event.block.getRelative(BlockFace.UP).location)
+                ParticleFX.fizzle(event.block.location, event.block.getRelative(BlockFace.UP).location)
                 return
             }
 
@@ -73,7 +73,7 @@ class BreakingAspect(private val plugin: Plugin): Listener {
                     }
                 }
             } else {
-                Effects.fizzle(event.block.location, event.block.getRelative(BlockFace.UP).location)
+                ParticleFX.fizzle(event.block.location, event.block.getRelative(BlockFace.UP).location)
             }
         }
     }
@@ -146,7 +146,7 @@ class BreakingAspect(private val plugin: Plugin): Listener {
     }
 
     private fun performBlockBreak(block: Block, tool: ItemStack) {
-        Effects.blockBroken(block.location, ItemStack(block.type))
+        ParticleFX.blockBroken(block.location, ItemStack(block.type))
         Sfx.blockBreak(block)
         block.breakNaturally(tool)
     }
@@ -190,7 +190,7 @@ class BreakingAspect(private val plugin: Plugin): Listener {
         if(!transactions.contains(transaction.id))
             return
 
-        Effects.crackAllSides(transaction.breakee, transaction.breakee.block.type)
+        ParticleFX.crackAllSides(transaction.breakee, transaction.breakee.block.type)
     }
 
     private fun validateBreakerPower(tx: BreakTransaction) {

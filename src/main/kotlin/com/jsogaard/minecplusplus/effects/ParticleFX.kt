@@ -3,11 +3,10 @@ package com.jsogaard.minecplusplus.effects
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.Particle
-import org.bukkit.block.Block
 import org.bukkit.inventory.ItemStack
 import kotlin.math.floor
 
-object Effects {
+object ParticleFX {
     fun fizzle(from: Location, to: Location) {
         val x = from.x + 0.5
         val y = from.y + 0.5

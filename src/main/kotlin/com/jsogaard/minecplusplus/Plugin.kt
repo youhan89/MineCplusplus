@@ -1,6 +1,6 @@
 package com.jsogaard.minecplusplus
 
-import com.jsogaard.minecplusplus.breaking.BreakingAspect
+import com.jsogaard.minecplusplus.breaking.BreakerAspect
 import com.jsogaard.minecplusplus.placing.PlacingAspect
 import org.bukkit.NamespacedKey
 import org.bukkit.plugin.java.JavaPlugin
@@ -15,7 +15,7 @@ class Plugin: JavaPlugin() {
         server.pluginManager.registerEvents(DispenseCraftingTableAspect(this), this)
         server.pluginManager.registerEvents(SmokedDropperAspect(this), this)
 
-        server.pluginManager.registerEvents(BreakingAspect(this), this)
+        server.pluginManager.registerEvents(BreakerAspect(this), this)
         server.pluginManager.registerEvents(PlacingAspect(this), this)
 
         //server.pluginManager.registerEvents(FirstTestAspect(this), this)

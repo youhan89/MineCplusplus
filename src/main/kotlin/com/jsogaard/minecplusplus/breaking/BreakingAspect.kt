@@ -19,7 +19,7 @@ import org.bukkit.inventory.ItemStack
 import kotlin.math.abs
 
 class BreakingAspect(private val plugin: Plugin): Listener {
-    private val debug = true
+    private val debug = false
     private val transactions = mutableMapOf<Long, BreakTransaction>()
     private var counter = 0L
 
@@ -41,7 +41,8 @@ class BreakingAspect(private val plugin: Plugin): Listener {
                 val duration = BlockBreaking.getBreakTimeTicks(event.item, targetBlock)
 
                 if(duration == 0) {
-                    targetBlock.breakNaturally()
+                    Effects.blockBroken(targetBlock.location, ItemStack(targetBlock.type))
+                    targetBlock.breakNaturally(event.item)
                     return
                 }
 

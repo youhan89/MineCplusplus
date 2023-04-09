@@ -37,7 +37,7 @@ object Effects {
     }
 
     fun blockBroken(location: Location, material: ItemStack) {
-        location.world.spawnParticle(Particle.ITEM_CRACK, location.toCenterLocation(), 32, 0.2, 0.2, 0.2, 0.05, material);
+        location.world.spawnParticle(Particle.ITEM_CRACK, location.toCenterLocation(), 32, 0.2, 0.2, 0.2, 0.1, material);
     }
 }
 

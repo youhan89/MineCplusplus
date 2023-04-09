@@ -3,12 +3,13 @@ package com.jsogaard.minecplusplus.breaking
 import com.jsogaard.minecplusplus.Plugin
 import com.jsogaard.minecplusplus.deleteOne
 import com.jsogaard.minecplusplus.effects.Effects
+import com.jsogaard.minecplusplus.effects.Sfx
 import com.jsogaard.minecplusplus.facingBlock
 import com.jsogaard.minecplusplus.rules.BlockBreaking
 import com.jsogaard.minecplusplus.rules.Rules
 import com.jsogaard.minecplusplus.toDispenserOrNull
-import org.bukkit.Material
 import org.bukkit.Sound
+import org.bukkit.block.Block
 import org.bukkit.block.BlockFace
 import org.bukkit.enchantments.Enchantment
 import org.bukkit.event.EventHandler
@@ -16,7 +17,6 @@ import org.bukkit.event.Listener
 import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.block.BlockDispenseEvent
 import org.bukkit.event.block.BlockRedstoneEvent
-import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.Damageable
@@ -47,8 +47,7 @@ class BreakingAspect(private val plugin: Plugin): Listener {
                 val duration = BlockBreaking.getBreakTimeTicks(event.item, targetBlock)
 
                 if(duration == 0) {
-                    Effects.blockBroken(targetBlock.location, ItemStack(targetBlock.type))
-                    targetBlock.breakNaturally(event.item)
+                    performBlockBreak(targetBlock, event.item)
                     return
                 }
 
@@ -73,9 +72,6 @@ class BreakingAspect(private val plugin: Plugin): Listener {
                         animateProgress(transaction)
                     }
                 }
-
-                //TODO -> SFX/VFX
-                //TODO -> Consume durability
             } else {
                 Effects.fizzle(event.block.location, event.block.getRelative(BlockFace.UP).location)
             }
@@ -84,19 +80,27 @@ class BreakingAspect(private val plugin: Plugin): Listener {
 
     @EventHandler
     fun onEvent(event: BlockRedstoneEvent) {
-        //plugin.server.broadcastMessage("${event.block.location.toString()} ${event.newCurrent}")
-
         if(event.newCurrent != 0)
+            return
+
+        if(transactions.isEmpty())
             return
 
         val subject = event.block
         val loc = subject.location
 
+        if(!loc.isWorldLoaded)
+            return
+
         transactions.forEach {
             val bloc = it.value.breaker
-            if(abs(bloc.x - loc.x) <= 1 && abs(bloc.y - loc.y) <= 1 && abs(bloc.z - loc.z) <= 1) {
+
+            if(!bloc.isWorldLoaded)
+                return@forEach
+
+            if(abs(bloc.x - loc.x) <= 1 && abs(bloc.y - loc.y) <= 1 && abs(bloc.z - loc.z) <= 1 && loc.world == bloc.world) {
                 plugin.scheduleRun {
-                    validateTransactionPower(it.value)
+                    validateBreakerPower(it.value)
                 }
             }
         }
@@ -107,39 +111,6 @@ class BreakingAspect(private val plugin: Plugin): Listener {
         transactions.forEach {
             if(it.value.breakee == event.block.location)
                 failTransaction(it.value, "Block was broken")
-        }
-    }
-
-    @EventHandler
-    fun onEvent(event: PlayerInteractEvent) {
-        if(!debug) return
-
-        if(event.clickedBlock != null && event.item?.type == Material.STICK) {
-            val type = event.clickedBlock?.type
-            val loot = event.clickedBlock?.getDrops(ItemStack(Material.WOODEN_PICKAXE))
-            val time = event.clickedBlock?.getDestroySpeed(ItemStack(Material.WOODEN_PICKAXE))
-
-            plugin.server.broadcastMessage("Hardness ${type?.hardness}, requireSpecial: ${event.clickedBlock?.blockData?.requiresCorrectToolForDrops()}, loot: $loot, time: $time")
-        }
-
-        if(event.clickedBlock != null && event.item?.type in Rules.ALL_TOOLS) {
-            val block = event.clickedBlock!!
-            val tool = event.item!!
-
-            val breakTime = BlockBreaking.getBreakTimeTicks(event.item!!, event.clickedBlock!!) / 20 //to seconds
-            val requireSpecial = event.clickedBlock?.blockData?.requiresCorrectToolForDrops()
-            val isPreferred = event.clickedBlock!!.isPreferredTool(event.item!!)
-
-            val toolMultiplier = block.getDestroySpeed(tool)
-            val canHarvest = !block.blockData.requiresCorrectToolForDrops() || block.blockData.isPreferredTool(tool)
-            val efficiencyLevel = tool.itemMeta.enchants.firstNotNullOfOrNull {
-                if(it.key == Enchantment.DIG_SPEED)
-                    it.value
-                else null
-            } ?: 0
-            val blockHardness = block.type.hardness
-
-            plugin.server.broadcastMessage("Breaktime: $breakTime. requireSpecial: $requireSpecial, isPreferred: $isPreferred, canHarvest: $canHarvest, hardness: $blockHardness, toolMultiplier: $toolMultiplier, efficiency: $efficiencyLevel")
         }
     }
 
@@ -170,9 +141,14 @@ class BreakingAspect(private val plugin: Plugin): Listener {
         }
 
         transactions.remove(tx.id)
-        Effects.blockBroken(tx.breakee, ItemStack(tx.breakee.block.type))
-        targetBlock.breakNaturally(tx.tool)
+        performBlockBreak(targetBlock, tx.tool)
         modifyDurability(newToolRef, dispenser.inventory)
+    }
+
+    private fun performBlockBreak(block: Block, tool: ItemStack) {
+        Effects.blockBroken(block.location, ItemStack(block.type))
+        Sfx.blockBreak(block)
+        block.breakNaturally(tool)
     }
 
     private fun modifyDurability(tool: ItemStack, inventory: Inventory) {
@@ -217,7 +193,7 @@ class BreakingAspect(private val plugin: Plugin): Listener {
         Effects.crackAllSides(transaction.breakee, transaction.breakee.block.type)
     }
 
-    private fun validateTransactionPower(tx: BreakTransaction) {
+    private fun validateBreakerPower(tx: BreakTransaction) {
         if(tx.breaker.block.blockPower == 0) {
             failTransaction(tx, "Redstone power went away")
         }

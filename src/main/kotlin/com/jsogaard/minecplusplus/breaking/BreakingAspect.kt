@@ -16,7 +16,10 @@ import org.bukkit.event.block.BlockDispenseEvent
 import org.bukkit.event.block.BlockRedstoneEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.inventory.ItemStack
+import org.bukkit.inventory.meta.Damageable
+import java.lang.IllegalArgumentException
 import kotlin.math.abs
+import kotlin.random.Random
 
 class BreakingAspect(private val plugin: Plugin): Listener {
     private val debug = false
@@ -152,7 +155,8 @@ class BreakingAspect(private val plugin: Plugin): Listener {
                 return
             }
 
-        if(!dispenser.inventory.filterNotNull().any { it.isSimilar(tx.tool) }) {
+        val newToolRef = dispenser.inventory.filterNotNull().firstOrNull { it.isSimilar(tx.tool) }
+        if(newToolRef == null) {
             failTransaction(tx, "The tool wasn't found")
             return
         }
@@ -165,6 +169,29 @@ class BreakingAspect(private val plugin: Plugin): Listener {
         transactions.remove(tx.id)
         Effects.blockBroken(tx.breakee, ItemStack(tx.breakee.block.type))
         targetBlock.breakNaturally(tx.tool)
+        modifyDurability(newToolRef)
+    }
+
+    private fun modifyDurability(tool: ItemStack) {
+        val meta = (tool.itemMeta as? Damageable)
+            ?: throw IllegalArgumentException("Tool not damageable")
+
+        val unbreakingLevel = meta.enchants.firstNotNullOfOrNull {
+            if(it.key == Enchantment.DURABILITY)
+                it.value
+            else null
+        } ?: 0
+
+        val applyUse = when(unbreakingLevel) {
+            3 -> false
+            2,1 -> Random.nextInt(1, 1 + unbreakingLevel*2) == 1
+            else -> true
+        }
+
+        if(applyUse) {
+            meta.damage++
+            tool.itemMeta = meta
+        }
     }
 
     private fun failTransaction(tx: BreakTransaction, msg: String) {

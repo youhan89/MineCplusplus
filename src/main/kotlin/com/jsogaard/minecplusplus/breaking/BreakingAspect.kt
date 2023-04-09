@@ -36,9 +36,18 @@ class BreakingAspect(private val plugin: Plugin): Listener {
             }
 
             if (targetBlock.type !in Rules.CANT_BE_BROKEN_BY_PLAYERS) {
+                event.isCancelled = true
+
+                val duration = BlockBreaking.getBreakTimeTicks(event.item, targetBlock)
+
+                if(duration == 0) {
+                    targetBlock.breakNaturally()
+                    return
+                }
+
                 val transaction = BreakTransaction(
                     id = nextTxId(),
-                    durationTicks = BlockBreaking.getBreakTimeTicks(event.item, targetBlock),
+                    durationTicks = duration,
                     breaker = event.block.location,
                     breakee = targetBlock.location,
                     breakeeType = targetBlock.type,
@@ -47,11 +56,15 @@ class BreakingAspect(private val plugin: Plugin): Listener {
 
                 transactions[transaction.id] = transaction
 
-                //targetBlock.breakNaturally(event.item)
-
-                event.isCancelled = true
                 plugin.scheduleRun(transaction.durationTicks.toLong()) {
                     onTransactionExecute(transaction)
+                }
+
+                val animations = transaction.durationTicks / 20
+                (0..animations).forEach {
+                    plugin.scheduleRun(it * 20.toLong()) {
+                        animateTransaction(transaction)
+                    }
                 }
 
                 //TODO -> SFX/VFX
@@ -149,6 +162,7 @@ class BreakingAspect(private val plugin: Plugin): Listener {
         }
 
         transactions.remove(tx.id)
+        Effects.blockBroken(tx.breakee, ItemStack(tx.breakee.block.type))
         targetBlock.breakNaturally(tx.tool)
     }
 
@@ -158,6 +172,13 @@ class BreakingAspect(private val plugin: Plugin): Listener {
         if(!debug) return
 
         plugin.server.broadcastMessage("Breaker Tx failed: $msg")
+    }
+
+    private fun animateTransaction(transaction: BreakTransaction) {
+        if(!transactions.contains(transaction.id))
+            return
+
+        Effects.crackAllSides(transaction.breakee, transaction.breakee.block.type)
     }
 
     private fun validateTransactionPower(tx: BreakTransaction) {

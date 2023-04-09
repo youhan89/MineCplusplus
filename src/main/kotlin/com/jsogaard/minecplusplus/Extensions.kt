@@ -40,6 +40,16 @@ private fun Inventory.copyAndMerge(result: ItemStack): Array<ItemStack> {
     }.toTypedArray()
 }
 
+fun Inventory.deleteOne(itemStack: ItemStack) {
+    var deleted = false
+    this.storageContents = this.storageContents.map {
+        if(!deleted && it?.isSimilar(itemStack) == true) {
+            deleted = true
+            null
+        } else it
+    }.toTypedArray()
+}
+
 operator fun ItemStack.minus(other: Int): ItemStack? {
     val newAmount = this.amount - other
     return when {

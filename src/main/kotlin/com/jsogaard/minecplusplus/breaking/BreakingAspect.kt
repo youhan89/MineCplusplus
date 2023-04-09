@@ -1,12 +1,14 @@
 package com.jsogaard.minecplusplus.breaking
 
 import com.jsogaard.minecplusplus.Plugin
+import com.jsogaard.minecplusplus.deleteOne
 import com.jsogaard.minecplusplus.effects.Effects
 import com.jsogaard.minecplusplus.facingBlock
 import com.jsogaard.minecplusplus.rules.BlockBreaking
 import com.jsogaard.minecplusplus.rules.Rules
 import com.jsogaard.minecplusplus.toDispenserOrNull
 import org.bukkit.Material
+import org.bukkit.Sound
 import org.bukkit.block.BlockFace
 import org.bukkit.enchantments.Enchantment
 import org.bukkit.event.EventHandler
@@ -15,6 +17,7 @@ import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.block.BlockDispenseEvent
 import org.bukkit.event.block.BlockRedstoneEvent
 import org.bukkit.event.player.PlayerInteractEvent
+import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.Damageable
 import java.lang.IllegalArgumentException
@@ -67,7 +70,7 @@ class BreakingAspect(private val plugin: Plugin): Listener {
                 val animations = transaction.durationTicks / 20
                 (0..animations).forEach {
                     plugin.scheduleRun(it * 20.toLong()) {
-                        animateTransaction(transaction)
+                        animateProgress(transaction)
                     }
                 }
 
@@ -169,10 +172,10 @@ class BreakingAspect(private val plugin: Plugin): Listener {
         transactions.remove(tx.id)
         Effects.blockBroken(tx.breakee, ItemStack(tx.breakee.block.type))
         targetBlock.breakNaturally(tx.tool)
-        modifyDurability(newToolRef)
+        modifyDurability(newToolRef, dispenser.inventory)
     }
 
-    private fun modifyDurability(tool: ItemStack) {
+    private fun modifyDurability(tool: ItemStack, inventory: Inventory) {
         val meta = (tool.itemMeta as? Damageable)
             ?: throw IllegalArgumentException("Tool not damageable")
 
@@ -192,6 +195,11 @@ class BreakingAspect(private val plugin: Plugin): Listener {
             meta.damage++
             tool.itemMeta = meta
         }
+
+        if(meta.damage >= tool.type.maxDurability) {
+            inventory.deleteOne(tool)
+            inventory.location?.world?.playSound(inventory.location!!, Sound.ENTITY_ITEM_BREAK, 1f, 1f)
+        }
     }
 
     private fun failTransaction(tx: BreakTransaction, msg: String) {
@@ -202,7 +210,7 @@ class BreakingAspect(private val plugin: Plugin): Listener {
         plugin.server.broadcastMessage("Breaker Tx failed: $msg")
     }
 
-    private fun animateTransaction(transaction: BreakTransaction) {
+    private fun animateProgress(transaction: BreakTransaction) {
         if(!transactions.contains(transaction.id))
             return
 

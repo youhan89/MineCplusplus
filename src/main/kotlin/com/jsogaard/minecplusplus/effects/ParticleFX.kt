@@ -38,6 +38,12 @@ object ParticleFX {
     fun blockBroken(location: Location, material: ItemStack) {
         location.world.spawnParticle(Particle.ITEM_CRACK, location.toCenterLocation(), 32, 0.2, 0.2, 0.2, 0.1, material);
     }
+
+    fun convertToPlacerBlock(location: Location) {
+        location.allFaceCenters().forEach {
+            location.world?.spawnParticle(Particle.END_ROD, it, 16, 0.25, 0.25, 0.25, 0.025)
+        }
+    }
 }
 
 private fun Location.allFaceCenters(): List<Location> {

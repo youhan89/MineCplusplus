@@ -8,7 +8,8 @@ import org.bukkit.plugin.java.JavaPlugin
 class Plugin: JavaPlugin() {
     val namespaceKeys = Namespaces(
         craftingDropper = createNamespacedKey("crafting_dropper"),
-        dropSlot = createNamespacedKey("drop_slot")
+        dropSlot = createNamespacedKey("drop_slot"),
+        placerBlockTag = createNamespacedKey("placer")
     )
     override fun onEnable() {
         super.onEnable()
@@ -41,4 +42,5 @@ class Plugin: JavaPlugin() {
 data class Namespaces(
     val craftingDropper: NamespacedKey,
     val dropSlot: NamespacedKey,
+    val placerBlockTag: NamespacedKey,
 )

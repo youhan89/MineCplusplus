@@ -10,4 +10,12 @@ object Sfx {
             //OK to fail
         }
     }
+
+    fun blockPlaced(block: Block) {
+        try {
+            block.world.playSound(block.location, block.blockData.soundGroup.placeSound, 1f, 1f)
+        } catch (e: Exception) {
+            //OK to fail
+        }
+    }
 }

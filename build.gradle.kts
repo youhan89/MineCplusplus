@@ -1,5 +1,3 @@
-import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.archivesName
-import org.jetbrains.kotlin.ir.backend.js.compile
 import java.util.Properties
 
 plugins {
@@ -7,8 +5,7 @@ plugins {
     `java-library`
 }
 
-group = "org.example"
-version = "1.0-SNAPSHOT"
+group = "cubematic"
 
 repositories {
     mavenCentral()

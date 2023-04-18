@@ -1,5 +1,6 @@
-package com.jsogaard.minecplusplus
+package com.jsogaard.minecplusplus.crafting
 
+import com.jsogaard.minecplusplus.*
 import org.bukkit.*
 import org.bukkit.block.Block
 import org.bukkit.block.Container
@@ -10,7 +11,7 @@ import org.bukkit.event.block.BlockDispenseEvent
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
 
-class DispenseCraftingTableAspect(private val plugin: Plugin): Listener {
+class DispenseCraftingTableAspect(private val plugin: CubematicPlugin): Listener {
     @EventHandler
     fun onEvent(event: BlockDispenseEvent) {
         if(event.item.type != Material.CRAFTING_TABLE)
@@ -26,10 +27,6 @@ class DispenseCraftingTableAspect(private val plugin: Plugin): Listener {
         val dropperInventory = dropper.inventory
 
         event.isCancelled = true
-
-        //(the following is an experiment related to ChannelingDropperAspect)
-        //For now, set any dropper dispensed to with a crafting table as a Channeling Dropper
-        //dropper.setCraftingDropper(true, plugin)
 
         val pattern = dropperInventory.contents.map { item ->
             when {

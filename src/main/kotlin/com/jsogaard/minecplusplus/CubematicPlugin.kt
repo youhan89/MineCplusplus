@@ -1,11 +1,13 @@
 package com.jsogaard.minecplusplus
 
 import com.jsogaard.minecplusplus.breaking.BreakerAspect
+import com.jsogaard.minecplusplus.crafting.DispenseCraftingTableAspect
+import com.jsogaard.minecplusplus.crafting.SequenceInputDropperAspect
 import com.jsogaard.minecplusplus.placing.PlacingAspect
 import org.bukkit.NamespacedKey
 import org.bukkit.plugin.java.JavaPlugin
 
-class Plugin: JavaPlugin() {
+class CubematicPlugin: JavaPlugin() {
     val namespaceKeys = Namespaces(
         craftingDropper = createNamespacedKey("crafting_dropper"),
         dropSlot = createNamespacedKey("drop_slot"),
@@ -14,7 +16,7 @@ class Plugin: JavaPlugin() {
     override fun onEnable() {
         super.onEnable()
         server.pluginManager.registerEvents(DispenseCraftingTableAspect(this), this)
-        server.pluginManager.registerEvents(SmokedDropperAspect(this), this)
+        server.pluginManager.registerEvents(SequenceInputDropperAspect(this), this)
 
         server.pluginManager.registerEvents(BreakerAspect(this), this)
         server.pluginManager.registerEvents(PlacingAspect(this), this)
@@ -35,7 +37,7 @@ class Plugin: JavaPlugin() {
     fun createNamespacedKey(entry: String)
             = NamespacedKey.fromString("$namespace:$entry".lowercase(), this)!!
     companion object {
-        const val namespace = "dispensercraft"
+        const val namespace = "cubematic"
     }
 }
 

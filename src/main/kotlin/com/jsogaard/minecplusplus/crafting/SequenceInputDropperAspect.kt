@@ -1,23 +1,30 @@
-package com.jsogaard.minecplusplus
+package com.jsogaard.minecplusplus.crafting
 
+import com.jsogaard.minecplusplus.*
+import com.jsogaard.minecplusplus.effects.ParticleFX
+import com.jsogaard.minecplusplus.effects.Sfx
+import net.kyori.adventure.text.Component
 import org.bukkit.Material
-import org.bukkit.block.BlockFace
 import org.bukkit.block.Dropper
+import org.bukkit.event.Event
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
+import org.bukkit.event.block.Action
+import org.bukkit.event.block.BlockBreakEvent
 import org.bukkit.event.inventory.InventoryMoveItemEvent
 import org.bukkit.event.inventory.InventoryType
+import org.bukkit.event.player.PlayerInteractEvent
+import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
 
+private const val CUSTOM_NAME = "Sequence Dropper"
+private val ACTIVATOR_MATERIAL = Material.CLOCK
+
 /**
- * experimental "modify dropper" insert order by putting a soul campfire directly underneath it
- *
- *    (hopper)
- *   (dropper)
- * (soul campfire)
+ * Dropper with sequentially incremented input slot when getting items from another block.
  */
-class SmokedDropperAspect(private val plugin: Plugin): Listener {
+class SequenceInputDropperAspect(private val plugin: CubematicPlugin): Listener {
     @EventHandler
     fun onMoveInventoryEvent(event: InventoryMoveItemEvent) {
         if(event.destination.type == InventoryType.DROPPER) {
@@ -25,7 +32,7 @@ class SmokedDropperAspect(private val plugin: Plugin): Listener {
             val dropperInventory = event.destination
             val dropper = (dropperInventory.holder as Dropper)
 
-            if(!isSmoked(dropper)) {
+            if(!dropper.isSequentialMode()) {
                 return
             } else {
                 //Cancel the native move, this returns the item to the source.
@@ -73,12 +80,70 @@ class SmokedDropperAspect(private val plugin: Plugin): Listener {
         }
     }
 
-    private fun isSmoked(dropper: Dropper): Boolean {
-        val below = dropper.block.getRelative(BlockFace.DOWN)
-        return below.type == Material.SOUL_CAMPFIRE
-                || below.type == Material.SOUL_TORCH
-                || below.type == Material.SOUL_WALL_TORCH
+    @EventHandler
+    fun onEvent(event: PlayerInteractEvent) {
+        if(event.action != Action.RIGHT_CLICK_BLOCK)
+            return
+
+        val item = event.item
+        val block = event.clickedBlock
+
+        if(block == null
+            || item == null
+            || item.type != ACTIVATOR_MATERIAL
+            || block.type != Material.DROPPER
+            || event.hand != EquipmentSlot.HAND)
+            return
+
+        val dropper = block.toDropper()
+        if(dropper.isSequentialMode())
+            return
+
+        ParticleFX.convertToSequential(block.location, event.blockFace, plugin)
+        Sfx.blockToSequential(block.location, plugin)
+
+        event.isCancelled = true
+
+        dropper.setIsSequentialMode(true)
+        event.setUseItemInHand(Event.Result.DENY)
+
+        if(dropper.customName() == null) {
+            dropper.customName(Component.text(CUSTOM_NAME))
+            dropper.update()
+        }
+
+        val itemInHand = event.player.inventory.itemInMainHand
+        if(itemInHand.amount == 1) {
+            event.player.inventory.setItemInMainHand(null)
+        } else {
+            event.player.inventory.setItemInMainHand(itemInHand - 1)
+        }
     }
+
+    @EventHandler
+    fun onEvent(event: BlockBreakEvent) {
+        val block = event.block
+        if(block.type != Material.DROPPER) {
+            return
+        }
+
+        val dropper = block.toDropper()
+        if(dropper.isSequentialMode()) {
+            if(dropper.customName()?.contains(Component.text(CUSTOM_NAME), Component.EQUALS) == true) {
+                dropper.customName(null)
+            }
+
+            dropper.setIsSequentialMode(false)
+
+            block.world.dropItem(block.location.toCenterLocation(), ItemStack(ACTIVATOR_MATERIAL, 1))
+            block.breakNaturally()
+
+            event.isCancelled = true
+        }
+    }
+
+    private fun Dropper.isSequentialMode() = this.isCraftingDropper(plugin)
+    private fun Dropper.setIsSequentialMode(state: Boolean) = this.setCraftingDropper(state, plugin)
 
     private fun incrementedStackOrNull(target: Inventory, targetSlot: Int, type: Material): ItemStack? {
         val transferStack = ItemStack(type, 1)

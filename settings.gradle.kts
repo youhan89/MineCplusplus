@@ -1,3 +1,3 @@
 
-rootProject.name = "MineCPlusPlus"
+rootProject.name = "cubematic"
 

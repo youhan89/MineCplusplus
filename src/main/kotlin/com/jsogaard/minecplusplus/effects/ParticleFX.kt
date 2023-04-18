@@ -1,9 +1,12 @@
 package com.jsogaard.minecplusplus.effects
 
+import com.jsogaard.minecplusplus.CubematicPlugin
 import org.bukkit.Location
 import org.bukkit.Material
 import org.bukkit.Particle
+import org.bukkit.block.BlockFace
 import org.bukkit.inventory.ItemStack
+import org.bukkit.util.Vector
 import kotlin.math.floor
 
 object ParticleFX {
@@ -44,6 +47,57 @@ object ParticleFX {
             location.world?.spawnParticle(Particle.END_ROD, it, 16, 0.25, 0.25, 0.25, 0.025)
         }
     }
+
+    fun convertToSequential(location: Location, blockFace: BlockFace, plugin: CubematicPlugin) {
+        val r1 = faceOrigin(blockFace).add(faceUp(blockFace).multiply(0.75))
+        val r2 = faceOrigin(blockFace).add(faceUp(blockFace).multiply(0.5))
+        val r3 = faceOrigin(blockFace).add(faceUp(blockFace).multiply(0.25))
+
+        val m2 = listOf(
+            r1.clone().add(faceRight(blockFace).multiply(0.25)),
+            r1.clone().add(faceRight(blockFace).multiply(0.5)),
+            r1.clone().add(faceRight(blockFace).multiply(0.75)),
+            r2.clone().add(faceRight(blockFace).multiply(0.25)),
+            r2.clone().add(faceRight(blockFace).multiply(0.5)),
+            r2.clone().add(faceRight(blockFace).multiply(0.75)),
+            r3.clone().add(faceRight(blockFace).multiply(0.25)),
+            r3.clone().add(faceRight(blockFace).multiply(0.5)),
+            r3.clone().add(faceRight(blockFace).multiply(0.75)),
+        )
+
+        var delay = 2L
+        m2.forEach {
+            plugin.scheduleRun(delay) {
+                val local = it.toLocation(location.world).add(location).add(0.0, 0.0, 0.0)
+                location.world?.spawnParticle(Particle.DRIPPING_DRIPSTONE_LAVA, local, 1, 0.0, 0.0, 0.0, 0.0)
+            }
+            delay += 3
+        }
+    }
+}
+
+private fun faceOrigin(blockFace: BlockFace): Vector = when(blockFace) {
+    BlockFace.NORTH -> Vector(1.0, 0.0, -0.1)
+    BlockFace.SOUTH -> Vector(0.0, 0.0, 1.1)
+    BlockFace.WEST -> Vector(-0.1, 0.0, 0.0)
+    BlockFace.EAST -> Vector(1.1, 0.0, 1.0)
+    BlockFace.UP -> Vector(0.0, 1.1, 1.0)
+    else -> Vector(0.0, -0.2, 1.0)
+}
+private fun faceUp(blockFace: BlockFace): Vector = when(blockFace) {
+    BlockFace.NORTH,
+    BlockFace.EAST,
+    BlockFace.WEST,
+    BlockFace.SOUTH -> Vector(0.0, 1.0, 0.0)
+    else -> Vector(0.0, 0.0, -1.0)
+}
+
+private fun faceRight(blockFace: BlockFace): Vector = when(blockFace) {
+    BlockFace.NORTH -> Vector(-1.0, 0.0, 0.0)
+    BlockFace.SOUTH -> Vector(1.0, 0.0, 0.0)
+    BlockFace.EAST -> Vector(0.0, 0.0, -1.0)
+    BlockFace.WEST -> Vector(0.0, 0.0, 1.0)
+    else -> Vector(1.0, 0.0, 0.0)
 }
 
 private fun Location.allFaceCenters(): List<Location> {

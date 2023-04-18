@@ -1,5 +1,6 @@
 package com.jsogaard.minecplusplus
 
+import com.jsogaard.minecplusplus.crafting.setCraftingDropper
 import org.bukkit.Material
 import org.bukkit.NamespacedKey
 import org.bukkit.block.ShulkerBox
@@ -17,7 +18,7 @@ const val LORE_TAG = "Mold"
  * Crafting table can be dispensed onto a dropper, whos inventory will be used as a recipe pattern.
  * But instead of dropping out the crafted item, it drops out a mold that needs to be cooked in a furnace.
  */
-class ItemMoldingAspect(private val plugin: Plugin): Listener {
+class ItemMoldingAspect(private val plugin: CubematicPlugin): Listener {
 
     init {
         val r = FurnaceRecipe(

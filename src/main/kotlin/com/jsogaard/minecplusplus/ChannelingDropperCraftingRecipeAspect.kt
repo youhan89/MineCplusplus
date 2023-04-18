@@ -1,5 +1,6 @@
 package com.jsogaard.minecplusplus
 
+import com.jsogaard.minecplusplus.crafting.setCraftingDropper
 import org.bukkit.Material
 import org.bukkit.enchantments.Enchantment
 import org.bukkit.event.Listener
@@ -8,7 +9,7 @@ import org.bukkit.inventory.RecipeChoice
 import org.bukkit.inventory.ShapedRecipe
 import org.bukkit.inventory.meta.EnchantmentStorageMeta
 
-class ChannelingDropperCraftingRecipeAspect(private val plugin: Plugin): Listener {
+class ChannelingDropperCraftingRecipeAspect(private val plugin: CubematicPlugin): Listener {
     init {
         val item = ItemStack(Material.DROPPER, 1).also { stack ->
             stack.itemMeta = stack.itemMeta?.also { meta ->

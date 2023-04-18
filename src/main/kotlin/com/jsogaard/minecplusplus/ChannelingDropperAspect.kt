@@ -1,5 +1,7 @@
 package com.jsogaard.minecplusplus
 
+import com.jsogaard.minecplusplus.crafting.isCraftingDropper
+import com.jsogaard.minecplusplus.crafting.setCraftingDropper
 import org.bukkit.block.Dropper
 import org.bukkit.enchantments.Enchantment
 import org.bukkit.event.EventHandler
@@ -11,7 +13,7 @@ import org.bukkit.event.inventory.InventoryType
 import org.bukkit.persistence.PersistentDataContainer
 import org.bukkit.persistence.PersistentDataType
 
-class ChannelingDropperAspect(private val plugin: Plugin): Listener {
+class ChannelingDropperAspect(private val plugin: CubematicPlugin): Listener {
     @EventHandler
     fun onMoveInventoryEvent(event: InventoryMoveItemEvent) {
         if(event.initiator.type == InventoryType.HOPPER && event.destination.type == InventoryType.DROPPER) {
@@ -103,34 +105,15 @@ class ChannelingDropperAspect(private val plugin: Plugin): Listener {
     }
 }
 
-fun Dropper.getDropSlot(plugin: Plugin) = this.persistentDataContainer.getDropSlot(plugin)
-fun Dropper.setDropSlot(plugin: Plugin, slot: Byte) {
+fun Dropper.getDropSlot(plugin: CubematicPlugin) = this.persistentDataContainer.getDropSlot(plugin)
+fun Dropper.setDropSlot(plugin: CubematicPlugin, slot: Byte) {
     this.persistentDataContainer.setDropSlot(plugin, slot)
     this.update()
 }
-fun PersistentDataContainer.setDropSlot(plugin: Plugin, slot: Byte) {
+fun PersistentDataContainer.setDropSlot(plugin: CubematicPlugin, slot: Byte) {
     set(plugin.namespaceKeys.dropSlot, PersistentDataType.BYTE, slot)
 }
 
-fun PersistentDataContainer.getDropSlot(plugin: Plugin): Byte? {
+fun PersistentDataContainer.getDropSlot(plugin: CubematicPlugin): Byte? {
     return get(plugin.namespaceKeys.dropSlot, PersistentDataType.BYTE)
-}
-
-fun Dropper.isCraftingDropper(plugin: Plugin): Boolean = this.persistentDataContainer.isCraftingDropper(plugin)
-fun Dropper.setCraftingDropper(isCraftingDropper: Boolean, plugin: Plugin) {
-    this.persistentDataContainer.setCraftingDropper(isCraftingDropper, plugin)
-    this.update()
-}
-
-fun PersistentDataContainer.setCraftingDropper(isCraftingDropper: Boolean, plugin: Plugin) {
-    if(isCraftingDropper) {
-        set(plugin.namespaceKeys.craftingDropper, PersistentDataType.BYTE, 1)
-    } else {
-        this.remove(plugin.namespaceKeys.craftingDropper)
-    }
-}
-
-fun PersistentDataContainer.isCraftingDropper(plugin: Plugin): Boolean {
-    val data = this.get(plugin.namespaceKeys.craftingDropper, PersistentDataType.BYTE)
-    return data == 1.toByte()
 }

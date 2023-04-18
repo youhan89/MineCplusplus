@@ -1,6 +1,6 @@
 package com.jsogaard.minecplusplus.breaking
 
-import com.jsogaard.minecplusplus.Plugin
+import com.jsogaard.minecplusplus.CubematicPlugin
 import com.jsogaard.minecplusplus.deleteOne
 import com.jsogaard.minecplusplus.effects.ParticleFX
 import com.jsogaard.minecplusplus.effects.Sfx
@@ -24,7 +24,7 @@ import java.lang.IllegalArgumentException
 import kotlin.math.abs
 import kotlin.random.Random
 
-class BreakerAspect(private val plugin: Plugin): Listener {
+class BreakerAspect(private val plugin: CubematicPlugin): Listener {
     private val debug = false
     private val transactions = mutableMapOf<Long, BreakTransaction>()
     private var counter = 0L

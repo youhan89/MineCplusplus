@@ -13,7 +13,7 @@ import org.bukkit.event.weather.WeatherChangeEvent
 import org.bukkit.inventory.ItemStack
 
 
-class FirstTestAspect(private val plugin: Plugin): Listener {
+class FirstTestAspect(private val plugin: CubematicPlugin): Listener {
     private var stopTheDrop = false
 
     @EventHandler

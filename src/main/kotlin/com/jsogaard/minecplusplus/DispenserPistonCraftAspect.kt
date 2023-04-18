@@ -20,7 +20,7 @@ import org.bukkit.inventory.ItemStack
  *
  * crafts when retracted
  */
-class DispenserPistonCraftAspect(val plugin: Plugin): Listener {
+class DispenserPistonCraftAspect(val plugin: CubematicPlugin): Listener {
     @EventHandler
     fun onEvent(event: BlockPistonRetractEvent) {
         if(event.blocks.size == 0) {

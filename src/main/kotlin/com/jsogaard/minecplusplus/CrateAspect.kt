@@ -1,5 +1,6 @@
 package com.jsogaard.minecplusplus
 
+import com.jsogaard.minecplusplus.crafting.setCraftingDropper
 import org.bukkit.Material
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
@@ -9,7 +10,7 @@ import org.bukkit.inventory.ItemStack
 /**
  * unfinished
  */
-class CreateAspect(private val plugin: Plugin): Listener {
+class CreateAspect(private val plugin: CubematicPlugin): Listener {
     @EventHandler
     fun onEvent(event: BlockDispenseEvent) {
         //plugin.server.broadcastMessage("Dispense a ${event.item.type}")

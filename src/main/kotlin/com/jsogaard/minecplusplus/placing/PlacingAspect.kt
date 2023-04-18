@@ -19,10 +19,9 @@ import org.bukkit.inventory.EquipmentSlot
 import org.bukkit.inventory.ItemStack
 import org.bukkit.persistence.PersistentDataContainer
 import org.bukkit.persistence.PersistentDataType
-import java.util.function.BiPredicate
 
 private const val PLACER_NAME = "Placer"
-class PlacingAspect(private val plugin: Plugin) : Listener {
+class PlacingAspect(private val plugin: CubematicPlugin) : Listener {
 
     @EventHandler
     fun onEvent(event: BlockDispenseEvent) {
@@ -146,7 +145,7 @@ private fun Material.mapConcreteFromPowder(): Material {
         ?: this
 }
 
-private fun PersistentDataContainer.setIsPlacer(state: Boolean, plugin: Plugin) {
+private fun PersistentDataContainer.setIsPlacer(state: Boolean, plugin: CubematicPlugin) {
     if(state) {
         set(plugin.namespaceKeys.placerBlockTag, PersistentDataType.BYTE, 1)
     } else {
@@ -154,16 +153,16 @@ private fun PersistentDataContainer.setIsPlacer(state: Boolean, plugin: Plugin) 
     }
 }
 
-private fun PersistentDataContainer.isPlacer(plugin: Plugin): Boolean {
+private fun PersistentDataContainer.isPlacer(plugin: CubematicPlugin): Boolean {
     val data = this.get(plugin.namespaceKeys.placerBlockTag, PersistentDataType.BYTE)
     return data == 1.toByte()
 }
 
-private fun Dispenser.setIsPlacer(state: Boolean, plugin: Plugin) {
+private fun Dispenser.setIsPlacer(state: Boolean, plugin: CubematicPlugin) {
     this.persistentDataContainer.setIsPlacer(state, plugin)
     this.update()
 }
-private fun Dispenser.isPlacer(plugin: Plugin): Boolean {
+private fun Dispenser.isPlacer(plugin: CubematicPlugin): Boolean {
     return this.persistentDataContainer.isPlacer(plugin)
 }
 

@@ -117,6 +117,8 @@ class BreakerAspect(private val plugin: CubematicPlugin): Listener {
     private fun nextTxId() = counter++
 
     private fun onTransactionExecute(tx: BreakTransaction) {
+        validateBreakerPower(tx)
+
         if(!transactions.contains(tx.id))
             return
 

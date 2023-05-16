@@ -12,9 +12,11 @@ import org.bukkit.inventory.Inventory
 import org.bukkit.inventory.ItemStack
 
 class DispenseCraftingTableAspect(private val plugin: CubematicPlugin): Listener {
+    private val craftingResolver = CraftingResolver(plugin.server)
+
     @EventHandler
     fun onEvent(event: BlockDispenseEvent) {
-        if(event.item.type != Material.CRAFTING_TABLE)
+        if(event.block.type != Material.DISPENSER || event.item.type != Material.CRAFTING_TABLE)
             return
 
         val dispenser = event.block.toDispenser()
@@ -31,13 +33,12 @@ class DispenseCraftingTableAspect(private val plugin: CubematicPlugin): Listener
         val pattern = dropperInventory.contents.map { item ->
             when {
                 item == null -> null
-                fillerItems.contains(item.type)  -> null
+                fillerItems.contains(item.type) -> null
                 else -> item
             }
         }
 
-        val recipe = plugin.server.getCraftingRecipe(pattern.toTypedArray() as Array<out ItemStack>, event.block.world)
-        val result = recipe?.result ?: run {
+        val result = craftingResolver.craft(pattern, event.block.world) ?: run {
             //plugin.server.broadcastMessage("No recipe found for crafting matrix...")
             //Play fizzle effect
             val location = dropper.block.location
@@ -49,8 +50,11 @@ class DispenseCraftingTableAspect(private val plugin: CubematicPlugin): Listener
         //If it's not an inventory, it'll just drop into the world, which is always safe
         val dropTargetBlock = dropperBlock.facingBlock()!!
         val chainedInventory = dropTargetBlock.inventory()
-        if(chainedInventory?.canReceive(result) == false) {
-            return
+        result.forEach {
+            //TODO Effect here?
+            if(chainedInventory?.canReceive(it) == false) {
+                return
+            }
         }
 
         //This next part removes a set of ingredients from the inventory
@@ -67,8 +71,12 @@ class DispenseCraftingTableAspect(private val plugin: CubematicPlugin): Listener
         }.toTypedArray()
 
         dropperInventory.contents = arrayOfNulls(9)
-        dropperInventory.addItem(result)
-        var previousAmount = result.amount
+        var previousAmount = 0
+        result.forEach {
+            dropperInventory.addItem(it)
+            previousAmount += it.amount
+        }
+
         while(!dropperInventory.isEmpty) {
             dropper.drop()
 

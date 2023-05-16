@@ -25,6 +25,9 @@ class PlacingAspect(private val plugin: CubematicPlugin) : Listener {
 
     @EventHandler
     fun onEvent(event: BlockDispenseEvent) {
+        if(event.block.type != Material.DISPENSER)
+            return
+
         val item = event.item
 
         if(item.type == Material.SHULKER_BOX) {

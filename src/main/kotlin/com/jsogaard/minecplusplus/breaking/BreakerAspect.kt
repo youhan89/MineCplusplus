@@ -8,6 +8,7 @@ import com.jsogaard.minecplusplus.facingBlock
 import com.jsogaard.minecplusplus.rules.BlockBreaking
 import com.jsogaard.minecplusplus.rules.Rules
 import com.jsogaard.minecplusplus.toDispenserOrNull
+import org.bukkit.Material
 import org.bukkit.Sound
 import org.bukkit.block.Block
 import org.bukkit.block.BlockFace
@@ -31,6 +32,9 @@ class BreakerAspect(private val plugin: CubematicPlugin): Listener {
 
     @EventHandler
     fun onEvent(event: BlockDispenseEvent) {
+        if(event.block.type != Material.DISPENSER)
+            return
+
         if (event.item.type in Rules.BLOCK_BREAK_ENABLERS) {
             val targetBlock = event.block.facingBlock()
                 ?: return

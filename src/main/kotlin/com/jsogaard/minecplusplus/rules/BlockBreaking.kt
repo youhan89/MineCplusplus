@@ -1,5 +1,6 @@
 package com.jsogaard.minecplusplus.rules
 
+import com.jsogaard.minecplusplus.nms.destroyspeed.DestroySpeedPolyfill
 import org.bukkit.block.Block
 import org.bukkit.enchantments.Enchantment
 import org.bukkit.inventory.ItemStack
@@ -16,7 +17,7 @@ object BlockBreaking {
         } ?: 0
 
         return getBreakTimeTicks(
-            toolMultiplier = block.getDestroySpeed(tool),
+            toolMultiplier = DestroySpeedPolyfill.get(block, tool),
             canHarvest = canHarvest,
             efficiencyLevel = efficiencyLevel,
             blockHardness = block.type.hardness

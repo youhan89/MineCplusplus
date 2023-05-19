@@ -15,6 +15,8 @@ class CubematicPlugin: JavaPlugin() {
     )
     override fun onEnable() {
         super.onEnable()
+        //server.pluginManager.registerEvents(DebugAspect(this), this)
+
         server.pluginManager.registerEvents(DispenseCraftingTableAspect(this), this)
         server.pluginManager.registerEvents(SequenceInputDropperAspect(this), this)
 
@@ -34,7 +36,7 @@ class CubematicPlugin: JavaPlugin() {
         server.scheduler.runTaskLater(this, Runnable { block() }, delayTicks)
     }
 
-    fun createNamespacedKey(entry: String)
+    private fun createNamespacedKey(entry: String)
             = NamespacedKey.fromString("$namespace:$entry".lowercase(), this)!!
     companion object {
         const val namespace = "cubematic"

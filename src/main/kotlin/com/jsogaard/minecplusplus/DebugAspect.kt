@@ -1,5 +1,7 @@
 package com.jsogaard.minecplusplus
 
+import com.jsogaard.minecplusplus.nms.destroyspeed.DestroySpeedPolyfill
+import com.jsogaard.minecplusplus.nms.destroyspeed.DestroySpeedShimFactory
 import com.jsogaard.minecplusplus.rules.BlockBreaking
 import com.jsogaard.minecplusplus.rules.Rules
 import org.bukkit.Material
@@ -28,7 +30,13 @@ class DebugAspect(private val plugin: CubematicPlugin): Listener {
             val requireSpecial = event.clickedBlock?.blockData?.requiresCorrectToolForDrops()
             val isPreferred = event.clickedBlock!!.isPreferredTool(event.item!!)
 
-            val toolMultiplier = block.getDestroySpeed(tool)
+            val nativeDestroySpeed = try {
+                block.getDestroySpeed(tool).toString()
+            } catch (e: Throwable) {
+                //Doesn't work in non-paper (spigot)
+                "<error>"
+            }
+            val shimDestroySpeed = DestroySpeedPolyfill.shim.getDestroySpeed(block, tool)
             val canHarvest = !block.blockData.requiresCorrectToolForDrops() || block.blockData.isPreferredTool(tool)
             val efficiencyLevel = tool.itemMeta.enchants.firstNotNullOfOrNull {
                 if(it.key == Enchantment.DIG_SPEED)
@@ -37,7 +45,7 @@ class DebugAspect(private val plugin: CubematicPlugin): Listener {
             } ?: 0
             val blockHardness = block.type.hardness
 
-            plugin.server.broadcastMessage("Breaktime: $breakTime. requireSpecial: $requireSpecial, isPreferred: $isPreferred, canHarvest: $canHarvest, hardness: $blockHardness, toolMultiplier: $toolMultiplier, efficiency: $efficiencyLevel")
+            plugin.server.broadcastMessage("Breaktime: $breakTime. requireSpecial: $requireSpecial, isPreferred: $isPreferred, canHarvest: $canHarvest, hardness: $blockHardness, nativeDestroySpeed: $nativeDestroySpeed, shimDestroySpeed: $shimDestroySpeed, efficiency: $efficiencyLevel")
         }
     }
 }

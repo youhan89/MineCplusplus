@@ -3,7 +3,9 @@ package com.jsogaard.minecplusplus.portals
 import com.jsogaard.minecplusplus.CubematicPlugin
 import com.jsogaard.minecplusplus.facingBlock
 import com.jsogaard.minecplusplus.toDispenser
+import org.bukkit.Location
 import org.bukkit.Material
+import org.bukkit.Sound
 import org.bukkit.block.Block
 import org.bukkit.block.BlockFace
 import org.bukkit.block.Container
@@ -15,30 +17,34 @@ import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerPortalEvent
 import org.bukkit.event.player.PlayerTeleportEvent
 import org.bukkit.inventory.meta.CompassMeta
+import se.ade.mc.cubematic.getCenter
 import java.util.logging.Logger
 
+private const val FOOD_BURN = 4
+
+private val adjacentFaces = arrayOf(
+    BlockFace.DOWN,
+    BlockFace.UP,
+    BlockFace.NORTH,
+    BlockFace.EAST,
+    BlockFace.SOUTH,
+    BlockFace.WEST
+)
+
+private val flatNeighbors = arrayOf(
+    BlockFace.NORTH,
+    BlockFace.EAST,
+    BlockFace.SOUTH,
+    BlockFace.WEST,
+    BlockFace.NORTH_EAST,
+    BlockFace.NORTH_WEST,
+    BlockFace.SOUTH_EAST,
+    BlockFace.SOUTH_WEST,
+)
 
 class PortalTestAspect(private val plugin: CubematicPlugin): Listener {
     private val debug = true
-    private val adjacentFaces = arrayOf(
-        BlockFace.DOWN,
-        BlockFace.UP,
-        BlockFace.NORTH,
-        BlockFace.EAST,
-        BlockFace.SOUTH,
-        BlockFace.WEST
-    )
 
-    private val flatNeighbors = arrayOf(
-        BlockFace.NORTH,
-        BlockFace.EAST,
-        BlockFace.SOUTH,
-        BlockFace.WEST,
-        BlockFace.NORTH_EAST,
-        BlockFace.NORTH_WEST,
-        BlockFace.SOUTH_EAST,
-        BlockFace.SOUTH_WEST,
-    )
 
     @EventHandler(ignoreCancelled = true)
     fun onEvent(e: PlayerPortalEvent) {
@@ -48,31 +54,38 @@ class PortalTestAspect(private val plugin: CubematicPlugin): Listener {
             val netherPortalStart = if(playerLocation.block.type == Material.NETHER_PORTAL) {
                 playerLocation.block
             } else {
-                val list = (-1..1).flatMap {
-                    flatNeighbors.map { playerLocation.block.getRelative(it) }
-                }
-
-                list.firstOrNull { it.type == Material.NETHER_PORTAL }
+                playerLocation.block.getNeighborsCubic(1)
+                    .filter { it.type == Material.NETHER_PORTAL }
+                    .map { it.location.getCenter() }
+                    .nearestOrNull(playerLocation)
+                    ?.block
             }
 
             if(netherPortalStart == null)
                 return
 
-            val portalBlocks = getConnectedblocks(netherPortalStart)
+            val portalBlocks = netherPortalStart.findAllChaining(Material.NETHER_PORTAL)
 
             val compass = findPortalCompass(portalBlocks)
                 ?: return
 
-            processPortal(e, compass, portalBlocks)
+            doPortalTeleport(e, compass, portalBlocks)
         }
     }
 
-    private fun processPortal(e: PlayerPortalEvent, compass: CompassMeta, portalBlocks: Set<Block>) {
+    private fun doPortalTeleport(e: PlayerPortalEvent, compass: CompassMeta, portalBlocks: Set<Block>) {
         e.isCancelled = true
-        val dest = compass.lodestone
+        val dest = compass.lodestone?.clone()?.add(0.5, 1.0, 0.5)
             ?: return
 
-        e.player.teleport(dest.add(0.5,1.0,0.5))
+        plugin.scheduleRun {
+            if(e.player.foodLevel >= FOOD_BURN + 1) {
+                e.player.teleport(dest, PlayerTeleportEvent.TeleportCause.PLUGIN)
+                e.player.foodLevel -= FOOD_BURN
+            } else {
+                e.player.playSound(e.player, Sound.ENTITY_PLAYER_BURP, 1f, 1f)
+            }
+        }
 
         portalBlocks.forEach { it.type = Material.AIR }
     }
@@ -120,38 +133,7 @@ class PortalTestAspect(private val plugin: CubematicPlugin): Listener {
         return null
     }
 
-    fun getConnectedblocks(start: Block): Set<Block> {
-        val results = mutableSetOf<Block>()
-        val checked = mutableSetOf<Block>()
-        val todo = mutableSetOf<Block>()
-        val targetType = start.type
 
-        todo.add(start)
-        results.add(start)
-
-        do {
-            val newBlocks = todo.flatMap { current ->
-                if(checked.contains(current)) return@flatMap listOf()
-
-                adjacentFaces.mapNotNull { face ->
-                    val candidate = current.getRelative(face)
-                    checked.add(candidate)
-
-                    when(candidate.type) {
-                        targetType -> candidate
-                        else -> null
-                    }
-                }
-            }
-
-            todo.clear()
-            results.addAll(newBlocks)
-            todo.addAll(newBlocks)
-
-        } while (todo.isNotEmpty())
-
-        return results
-    }
     @EventHandler
     fun onEvent(event: PlayerInteractEvent) {
         if (event.action != Action.RIGHT_CLICK_BLOCK)
@@ -223,4 +205,54 @@ class PortalTestAspect(private val plugin: CubematicPlugin): Listener {
         targetBlock.type = Material.NETHER_PORTAL
     }
 
+}
+
+private fun List<Location>.nearestOrNull(location: Location): Location? {
+    return if(this.isEmpty())
+        null
+    else
+        this.minBy { location.distance(it) }
+}
+
+fun Block.getNeighborsCubic(distance: Int): List<Block> {
+    val blocks = mutableListOf<Block>()
+    (-distance..distance).forEach { x ->
+        (-distance..distance).forEach { y ->
+            (-distance..distance).forEach { z ->
+                if(x != 0 || y != 0 || z != 0)
+                    blocks.add(this.getRelative(x,y,z))
+            }
+        }
+    }
+
+    return blocks
+}
+
+fun Block.findAllChaining(type: Material): Set<Block> {
+    val results = mutableSetOf<Block>()
+    val checked = mutableSetOf<Block>()
+    val todo = mutableSetOf<Block>()
+    todo.add(this)
+    results.add(this)
+    do {
+        val newBlocks = todo.flatMap { current ->
+            if (checked.contains(current)) return@flatMap listOf<Block>()
+
+            adjacentFaces.mapNotNull { face ->
+                val candidate = current.getRelative(face)
+                checked.add(candidate)
+
+                when (candidate.type) {
+                    type -> candidate
+                    else -> null
+                }
+            }
+        }
+
+        todo.clear()
+        results.addAll(newBlocks)
+        todo.addAll(newBlocks)
+
+    } while (todo.isNotEmpty())
+    return results
 }

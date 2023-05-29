@@ -4,6 +4,7 @@ import com.jsogaard.minecplusplus.breaking.BreakerAspect
 import com.jsogaard.minecplusplus.crafting.DispenseCraftingTableAspect
 import com.jsogaard.minecplusplus.crafting.SequenceInputDropperAspect
 import com.jsogaard.minecplusplus.placing.PlacingAspect
+import com.jsogaard.minecplusplus.portals.PortalTestAspect
 import org.bukkit.NamespacedKey
 import org.bukkit.plugin.java.JavaPlugin
 
@@ -22,6 +23,8 @@ class CubematicPlugin: JavaPlugin() {
 
         server.pluginManager.registerEvents(BreakerAspect(this), this)
         server.pluginManager.registerEvents(PlacingAspect(this), this)
+
+        // teleport: server.pluginManager.registerEvents(PortalTestAspect(this), this)
 
         //server.pluginManager.registerEvents(FirstTestAspect(this), this)
         //server.pluginManager.registerEvents(DispenserPistonCraftAspect(this), this)

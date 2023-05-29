@@ -9,10 +9,12 @@ import org.bukkit.Sound
 import org.bukkit.block.Block
 import org.bukkit.block.BlockFace
 import org.bukkit.block.Container
+import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.block.Action
 import org.bukkit.event.block.BlockDispenseEvent
+import org.bukkit.event.entity.EntityPortalEnterEvent
 import org.bukkit.event.player.PlayerInteractEvent
 import org.bukkit.event.player.PlayerPortalEvent
 import org.bukkit.event.player.PlayerTeleportEvent
@@ -42,52 +44,59 @@ private val flatNeighbors = arrayOf(
     BlockFace.SOUTH_WEST,
 )
 
+private const val IMMEDIATE_MODE = false
+
 class PortalTestAspect(private val plugin: CubematicPlugin): Listener {
     private val debug = true
 
-
-    @EventHandler(ignoreCancelled = true)
-    fun onEvent(e: PlayerPortalEvent) {
-        if(e.cause == PlayerTeleportEvent.TeleportCause.NETHER_PORTAL) {
-            val playerLocation = e.player.location
-
-            val netherPortalStart = if(playerLocation.block.type == Material.NETHER_PORTAL) {
-                playerLocation.block
-            } else {
-                playerLocation.block.getNeighborsCubic(1)
-                    .filter { it.type == Material.NETHER_PORTAL }
-                    .map { it.location.getCenter() }
-                    .nearestOrNull(playerLocation)
-                    ?.block
-            }
-
-            if(netherPortalStart == null)
-                return
-
-            val portalBlocks = netherPortalStart.findAllChaining(Material.NETHER_PORTAL)
-
-            val compass = findPortalCompass(portalBlocks)
-                ?: return
-
-            doPortalTeleport(e, compass, portalBlocks)
+    @EventHandler
+    fun onEvent(e: EntityPortalEnterEvent) {
+        if(IMMEDIATE_MODE && e.entity is Player && e.location.block.type == Material.NETHER_PORTAL) {
+            onPortalActivated(e.location, e.entity as Player)
         }
     }
 
-    private fun doPortalTeleport(e: PlayerPortalEvent, compass: CompassMeta, portalBlocks: Set<Block>) {
-        e.isCancelled = true
-        val dest = compass.lodestone?.clone()?.add(0.5, 1.0, 0.5)
-            ?: return
+    @EventHandler(ignoreCancelled = true)
+    fun onEvent(e: PlayerPortalEvent) {
+        if(!IMMEDIATE_MODE && e.cause == PlayerTeleportEvent.TeleportCause.NETHER_PORTAL) {
+            e.isCancelled = onPortalActivated(e.player.location, e.player)
+        }
+    }
 
-        plugin.scheduleRun {
-            if(e.player.foodLevel >= FOOD_BURN + 1) {
-                e.player.teleport(dest, PlayerTeleportEvent.TeleportCause.PLUGIN)
-                e.player.foodLevel -= FOOD_BURN
-            } else {
-                e.player.playSound(e.player, Sound.ENTITY_PLAYER_BURP, 1f, 1f)
+    private fun onPortalActivated(location: Location, player: Player): Boolean {
+        val netherPortalStart = if(location.block.type == Material.NETHER_PORTAL) {
+            location.block
+        } else {
+            location.block.getNeighborsCubic(1)
+                .filter { it.type == Material.NETHER_PORTAL }
+                .map { it.location.getCenter() }
+                .nearestOrNull(location)
+                ?.block
+        }
+
+        if(netherPortalStart == null)
+            return false
+
+        val portalBlocks = netherPortalStart.findAllChaining(Material.NETHER_PORTAL)
+
+        val compass = findPortalCompass(portalBlocks)
+            ?: return false
+
+        val dest = compass.lodestone?.clone()?.add(0.5, 1.0, 0.5)
+            ?: return false
+
+        if(player.foodLevel >= FOOD_BURN + 1) {
+            player.foodLevel -= FOOD_BURN
+
+            plugin.scheduleRun {
+                player.teleport(dest, PlayerTeleportEvent.TeleportCause.PLUGIN)
             }
+        } else {
+            player.playSound(player, Sound.ENTITY_PLAYER_BURP, 1f, 1f)
         }
 
         portalBlocks.forEach { it.type = Material.AIR }
+        return true
     }
 
     private fun findPortalCompass(portalBlocks: Set<Block>): CompassMeta? {
